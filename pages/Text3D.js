@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'THREE/examples/jsm/controls/OrbitControls';
-import { TextGeometry } from 'THREE/examples/jsm/geometries/TextGeometry.js';
-import typefaceFont from '/public/helvetiker_regular.typeface.json';
-import { FontLoader } from 'THREE/examples/jsm/loaders/FontLoader';
+import * as Three from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+// import typefaceFont from '/public/helvetiker_regular.typeface.json';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 
 
 export default function Text3D(){
@@ -21,21 +21,30 @@ export default function Text3D(){
         cursor.y = -(event.clientY / sizes.height - 0.5);
         })
 
-        //Scene
-        const scene = new THREE.Scene();
-
         //Canvas
         const canvas = document.querySelector('.webgl');
 
-        //Object
-        const cube = new THREE.Mesh(
-                new THREE.BufferGeometry(1, 1, 1),
-                new THREE.MeshBasicMaterial()
-            )
-            scene.add(cube);
-        //Textures
-        const textureLoader = new THREE.TextureLoader();
+        //Scene
+        const scene = new Three.Scene();
+
+        //group
+        const group = new Three.Group();
+        scene.add(group);
+
+        // //AxesHelper
+        // const axesHelper = new Three.AxesHelper();
+        // group.add(axesHelper);
         
+        //Textures
+        const textureLoader = new Three.TextureLoader();
+        const matcapTexture = textureLoader.load('/textures/matcaps/3.jpg');
+
+        //Sizes
+        const sizes = {
+        width: innerWidth,
+        height: 800
+        }
+
         //Fonts
         const fontLoader = new FontLoader();
         fontLoader.load(
@@ -45,23 +54,31 @@ export default function Text3D(){
             ( font ) => {
                
                 const textGeometry = new TextGeometry(
-                        'THREE.js',
+                        '!Vote IT',
                         {
                             font: font,
                             size: 0.5,
-                            height: 0.2,
+                            height: 0.4,
                             curveSegments: 6,
-                            bevelEnable: true,
-                            bevelThickness: 0.01,
-                            bevelSize: 0.05,
+                            bevelEnable: false,
+                            bevelThickness: 0.00,
+                            bevelSize: 0.00,
                             bevelOffset: 0,
-                            bevelSegments: 5
+                            bevelSegments: 0
                         }
                     )
-                    const textMaterial = new THREE.MeshBasicMaterial();
-                    textMaterial.wireframe = true;
-                    const text = new THREE.Mesh(textGeometry,textMaterial);
-                    scene.add(text);
+
+                    //Vote geometry
+                    textGeometry.computeBoundingBox();
+                    textGeometry.center();
+
+                    //Material
+                    const textMaterial = new Three.MeshMatcapMaterial({matcap: matcapTexture });
+
+                    //Mesh
+                    const text = new Three.Mesh(textGeometry,textMaterial);
+                    group.add(text);
+
             },
         
             // onProgress callback
@@ -75,21 +92,16 @@ export default function Text3D(){
             }
         );
 
-        //Sizes
-        const sizes = {
-            width: innerWidth,
-            height: 800
-        }
-
         //Cameras
-        const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
+        const camera = new Three.PerspectiveCamera(75, sizes.width / sizes.height);
         camera.position.z = 3;
         camera.position.x = cursor.x;
         camera.position.y = cursor.y;
-        scene.add( camera );
+        group.add( camera );
 
         //Renderer
-        const renderer = new THREE.WebGLRenderer({
+        const renderer = new Three.WebGLRenderer({
+            alpha: true,
             canvas
         })
 
@@ -99,7 +111,7 @@ export default function Text3D(){
 
         renderer.setSize(sizes.width, sizes.height);
 
-        const clock = new THREE.Clock();
+        const clock = new Three.Clock();
         const tick = () => 
          {
              const elapsedTime = clock.getElapsedTime()
